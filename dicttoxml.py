@@ -18,7 +18,7 @@ from random import randint
 import collections
 import numbers
 import logging
-from xml.dom.minidom import parseString
+import re
 
 
 LOG = logging.getLogger("dicttoxml")
@@ -118,15 +118,15 @@ def make_attrstring(attr):
     return '%s%s' % (' ' if attrstring != '' else '', attrstring)
 
 
+valid_xml_element_re = re.compile("\A(?!XML)[a-z][\w0-9-\.]*\Z", re.IGNORECASE)
+
+
 def key_is_valid_xml(key):
-    """Checks that a key is a valid XML name"""
-    LOG.info('Inside key_is_valid_xml(). Testing "%s"' % (unicode_me(key)))
-    test_xml = '<?xml version="1.0" encoding="UTF-8" ?><%s>foo</%s>' % (key, key)
-    try:
-        parseString(test_xml)
-        return True
-    except Exception: # minidom does not implement exceptions well
-        return False
+    """Checks that a key is a valid XML element name"""
+
+    match_obj = valid_xml_element_re.match(key)
+
+    return match_obj is not None
 
 
 def make_valid_xml_name(key, attr):
