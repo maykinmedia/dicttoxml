@@ -124,6 +124,9 @@ valid_xml_element_re = re.compile("\A(?!XML)[a-z][\w0-9-\.]*\Z", re.IGNORECASE)
 def key_is_valid_xml(key):
     """Checks that a key is a valid XML element name"""
 
+    if not isinstance(key, str):
+        return False
+
     match_obj = valid_xml_element_re.match(key)
 
     return match_obj is not None
