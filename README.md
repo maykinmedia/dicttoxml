@@ -1,7 +1,7 @@
 Summary
 =======
 
-Converts a Python dictionary or other native data type into a valid XML string. 
+Converts a Python dictionary or other native data type into a valid XML string.
 
 Details
 =======
@@ -33,27 +33,23 @@ Note: `datetime` data types are converted into ISO format strings, and `unicode`
     tuple     list
     dict      dict
 
-Elements with an unsupported data type raise a TypeError exception. 
+Elements with an unsupported data type raise a TypeError exception.
 
 If an element name is invalid XML, it is rendered with the name "key" and the invalid name is included as a `name` attribute. E.g. `{ "^.{0,256}$": "foo" }` would be rendered `<key name="^.{0,256}$">foo</key>`. An exception is element names with spaces, which are converted to underscores.
 
-**This module should work in Python 2.6+ and Python 3.**
+**This module should work in Python 3.6+. You might be able to get it to work in Python 2.x but that is no longer supported.**
 
 Installation
 ============
 
-The dicttoxml module is [published on the Python Package Index](https://pypi.python.org/pypi/dicttoxml), so you can install it using `pip` or `easy_install`.
+The dicttoxml module is [published on the Python Package Index](https://pypi.python.org/pypi/dicttoxml), so you can install it using `pip`.
 
     pip install dicttoxml
-    
-Or:
-
-    easy_install dicttoxml
 
 Alternately, you can download the tarballed installer - `dicttoxml-[VERSION].tar.gz` - for this package from the [dist](https://github.com/quandyfactory/dicttoxml/tree/master/dist) directory on github and uncompress it. Then, from a terminal or command window, navigate into the unzipped folder and type the command:
 
     python setup.py install
-    
+
 That should be all you need to do.
 
 Basic Usage
@@ -90,18 +86,18 @@ Let's say you want to fetch a JSON object from a URL and convert it into XML. He
 
 It's that simple.
 
-Disable Type Attributes
-=======================
+XML Snippet
+===========
 
-By default, dicttoxml includes a type attribute for each element. Starting in version 1.4, you can turn this off by passing an optional `attr_type=False` argument to the `dicttoxml` method. 
+Instead of creating a full XML document, you can create an XML snippet for inclusion into another XML document.
 
-Using our example:
+Continuing with the example from above:
 
-    >>> xml = dicttoxml.dicttoxml(obj, attr_type=False)
-    >>> print(xml)
-    <?xml version="1.0" encoding="UTF-8" ?><root><mydict><foo>bar</foo><baz>1</baz></mydict><mylist><item>foo</item><item>bar</item><item>baz</item></mylist><ok>true</ok></root>
+    >>> xml_snippet = dicttoxml.dicttoxml(obj, root=False)
+    >>> print(xml_snippet)
+    <mylist><item type="str">foo</item><item type="str">bar</item><item type="str">baz</item></mylist><mydict><foo type="str">bar</foo><baz type="int">1</baz></mydict><ok type="bool">true</ok>
 
-As you can see, the only difference is that the type attributes are now absent.
+With the optional `root` argument set to `False`, the method converts the dict into XML without including an `<?xml>` prolog or a `<root>` element to enclose all the other elements.
 
 Custom Root
 ===========
@@ -116,49 +112,47 @@ Using our example:
 
 As you can see, the name of the root element has changed to `some_custom_root`.
 
-XML Snippet
-===========
+Omit XML Declaration
+====================
 
-You can also create an XML snippet for inclusion into another XML document, rather than a full XML document itself.
+Perhaps you want your outputted XML to have a `root` but no XML declaration. Starting with version 1.7.15, can call `dicttoxml` with the optional `xml_declaration` argument set to `False`:
 
-Continuing with the example from above:
+    >>> xml = dicttoxml.dicttoxml(xml_declaration=False)
+    >>> print(xml)
+    <root><ok type="bool">true</ok><mylist type="list"><item type="str">foo</item><item type="str">bar</item><item type="str">baz</item></mylist><mydict type="dict"><foo type="str">bar</foo><baz type="int">1</baz></mydict></root>
 
-    >>> xml_snippet = dicttoxml.dicttoxml(obj, root=False)
-    >>> print(xml_snippet)
-    <mylist><item type="str">foo</item><item type="str">bar</item><item type="str">baz</item></mylist><mydict><foo type="str">bar</foo><baz type="int">1</baz></mydict><ok type="bool">true</ok>
+As you can see, the XML declaration has been omitted.
 
-With the optional `root` argument set to `False`, the method converts the dict into XML without including an `<?xml>` prolog or a `<root>` element to enclose all the other elements.
+Disable Type Attributes
+=======================
 
-Pretty-Printing
-===============
+By default, dicttoxml includes a type attribute for each element. Starting in version 1.4, you can turn this off by passing an optional `attr_type=False` argument to the `dicttoxml` method.
 
-As they say, Python comes with batteries included. You can easily syntax-check and pretty-print your XML using Python's `xml.dom.minidom` module. 
+Using our example:
 
-Again, continuing with our example:
+    >>> xml = dicttoxml.dicttoxml(obj, attr_type=False)
+    >>> print(xml)
+    <?xml version="1.0" encoding="UTF-8" ?><root><mydict><foo>bar</foo><baz>1</baz></mydict><mylist><item>foo</item><item>bar</item><item>baz</item></mylist><ok>true</ok></root>
 
-    >>> from xml.dom.minidom import parseString
-    >>> dom = parseString(xml)
-    >>> print(dom.toprettyxml())
-    <?xml version="1.0" ?>
-    <root>
-        <mylist type="list">
-            <item type="str">foo</item>
-            <item type="str">bar</item>
-            <item type="str">baz</item>
-        </mylist>
-        <mydict type="dict">
-            <foo type="str">bar</foo>
-            <baz type="int">1</baz>
-        </mydict>
-        <ok type="bool">true</ok>
-    </root>
+As you can see, the only difference is that the type attributes are now absent.
 
-This makes the XML easier to read. If it is not well-formed, the xml parser will raise an exception.
+Change or Suppress XML Encoding Attribute
+=========================================
+
+By default, dicttoxml renders the XML element with an `encoding="UTF-8"` attribute. Starting in version 1.7.6, you can change the encoding by using the optional `encoding` argument to the `dicttoxml` method. For example, to render an XML file with encoding "ISO-8859-1", you would call:
+
+    >>> xml = dicttoxml.dicttoxml(obj, encoding="ISO-8859-1")
+
+Or if you prefer, you can suppress the encoding attribute altogether by setting the optional `include_encoding` argument to `False`:
+
+    >>> xml = dicttoxml.dicttoxml(obj, include_encoding=False)
+
+Again, by default, the `include_encoding` argument is set to `True` and the `encoding` argument is set to `UTF-8`.
 
 Unique ID Attributes
 ====================
 
-Starting in version 1.1, you can set an optional `ids` parameter so that dicttoxml gives each element a unique `id` attribute. 
+Starting in version 1.1, you can set an optional `ids` parameter so that dicttoxml gives each element a unique `id` attribute.
 
 With the `ids` flag on, the function generates a unique randomly-generated ID for each element based on the parent element in the form `parent_unique`. For list items, the id is in the form `parent_unique_index`.
 
@@ -195,8 +189,8 @@ Starting in version 1.3, dicttoxml accepts dict-like objects that are derived fr
 
 Also starting in version 1.3, dicttoxml accepts iterable objects and treats them like lists. For example:
 
-    >>> myiterator = xrange(1,11)
-    >>> xml = dicttoxml.dicttoxml(myiterator)
+    >>> myiter = range(1,11)
+    >>> xml = dicttoxml.dicttoxml(myiter)
     >>> print(xml)
     <?xml version="1.0" encoding="UTF-8" ?><root><item type="int">1</item><item type="int">2</item><item type="int">3</item><item type="int">4</item><item type="int">5</item><item type="int">6</item><item type="int">7</item><item type="int">8</item><item type="int">9</item><item type="int">10</item></root>
 
@@ -240,25 +234,67 @@ Starting in version 1.7.1, you can wrap values in CDATA by setting the optional 
 
 If you do not set `cdata` to `True`, the default value is `False` and values are not wrapped.
 
+Return a String
+===============
+
+By default, dicttoxml outputs the generated XML as a `bytes` object:
+
+    >>> xml = dicttoxml.dicttoxml(obj)
+    >>> type(xml).__name__
+    'bytes'
+
+Starting in version 1.7.14, when you call the dicttoxml function, you can set an optional `return_bytes` argument to `False` to return a `str` object instead:
+
+    >>> xml = dicttoxml.dicttoxml(obj, return_bytes=False)
+    >>> type(xml).__name__
+    'str'
+
+But by default, `return_bytes` is set to `True`.
+
+Pretty-Printing
+===============
+
+As they say, Python comes with batteries included. You can easily syntax-check and pretty-print your XML using Python's `xml.dom.minidom` module.
+
+Again, continuing with our example:
+
+    >>> from xml.dom.minidom import parseString
+    >>> dom = parseString(xml)
+    >>> print(dom.toprettyxml())
+    <?xml version="1.0" ?>
+    <root>
+        <mylist type="list">
+            <item type="str">foo</item>
+            <item type="str">bar</item>
+            <item type="str">baz</item>
+        </mylist>
+        <mydict type="dict">
+            <foo type="str">bar</foo>
+            <baz type="int">1</baz>
+        </mydict>
+        <ok type="bool">true</ok>
+    </root>
+
+This makes the XML easier to read. If it is not well-formed, the xml parser will raise an exception.
+
 Debugging
 =========
 
-You can enable debugging information.
+You can enable debugging informationby calling the `set_debug()` method:
 
     >>> import dicttoxml
-    >>> dicttoxml.set_debug()
+    >>> dicttoxml.set_debug(debug=True)
     Debug mode is on. Events are logged at: dicttoxml.log
     >>> xml = dicttoxml.dicttoxml(some_dict)
 
 By default, debugging information is logged to `dicttoxml.log`, but you can change this:
 
-    >>> dicttoxml.set_debug(filename='some_other_filename.log')
+    >>> dicttoxml.set_debug(debug=True, filename='/path/to/some_other_filename.log')
     Debug mode is on. Events are logged at: some_other_filename.log
 
 To turn debug mode off, just call `set_debug` with an argument of `False`:
 
-    >>> dicttoxml.set_debug(False)
-    Debug mode is off.
+    >>> dicttoxml.set_debug(debug=False)
 
 If you encounter any errors in the code, please file an issue on github: [https://github.com/quandyfactory/dicttoxml/issues](https://github.com/quandyfactory/dicttoxml/issues).
 
@@ -272,11 +308,97 @@ Author
 Version
 =======
 
-* Version: 1.7.4
-* Release Date: 2016-07-08
+* Version: 1.7.16
+* Release Date: 2022-12-23
 
 Revision History
 ================
+
+Version 1.7.16
+--------------
+
+* Release Date: 2022-12-23
+* Changes:
+    * Resolved [issue #98](https://github.com/quandyfactory/dicttoxml/issues/98) and [issue #99](https://github.com/quandyfactory/dicttoxml/issues/99) (big thanks to [adrien-berchet](https://github.com/adrien-berchet) for identifying the issue and proposing the solution)
+    * Added `python_requires=">=3.6"` to `setup.py`
+
+Version 1.7.15
+--------------
+
+* Release Date: 2022-12-02
+* Changes:
+    * Fixed [issue #43](https://github.com/quandyfactory/dicttoxml/issues/43)
+    * Implemented [issue #82](https://github.com/quandyfactory/dicttoxml/issues/82)
+    * Small fixes to readme.md
+
+Version 1.7.14
+-------------
+
+* Release Date: 2022-12-02
+* Changes:
+    * Handle floating point keys as per [issue #61](https://github.com/quandyfactory/dicttoxml/issues/61)
+    * Option to return string instead of bytes as per [issue #55](https://github.com/quandyfactory/dicttoxml/issues/55)
+    * Reorganized readme.md to have a better flow.
+
+Version 1.7.13
+-------------
+
+* Release Date: 2022-11-29
+* Changes:
+    * Fixed [issue #53](https://github.com/quandyfactory/dicttoxml/issues/53), dicttoxml(None) and dicttoxml("name") break in 1.7
+    * Fixed [issue #96](https://github.com/quandyfactory/dicttoxml/issues/96), update readme section on debugging
+
+Version 1.7.12
+-------------
+
+* Release Date: 2022-11-29
+* Changes:
+    * Fixed [issue #95](https://github.com/quandyfactory/dicttoxml/issues/95): changed project.toml to support Python 3.6+ and updated readme documentation.
+
+Version 1.7.11
+-------------
+
+* Release Date: 2022-11-28
+* Changes:
+    * Simplified solution to issue 94
+
+Version 1.7.9
+-------------
+
+* Release Date: 2022-11-28
+* Changes:
+    * Fixed [issue #94](https://github.com/quandyfactory/dicttoxml/pull/94)
+
+
+Version 1.7.8
+-------------
+
+* Release Date: 2022-11-28
+* Changes:
+    * Fixed [issue #67](https://github.com/quandyfactory/dicttoxml/issues/67) and [issue #81](https://github.com/quandyfactory/dicttoxml/issues/81): Boolean values now export into XML in lowercase (true, false) instead of capitalized (True, False).
+
+Version 1.7.7
+-------------
+
+* Release Date: 2022-11-27
+* Changes:
+    * Fixed [issue #58](https://github.com/quandyfactory/dicttoxml/issues/58) and [issue #60](https://github.com/quandyfactory/dicttoxml/issues/60) on github: debug is turned off by default, and no longer prints "Debug mode is off" in the console.
+
+Version 1.7.6
+-------------
+
+* Release Date: 2022-11-26
+* Changes:
+    * Fixed [issue #88](https://github.com/quandyfactory/dicttoxml/issues/88) on github.
+    * Made XML encoding attribute optional and editable as per [issue 83](https://github.com/quandyfactory/dicttoxml/issues/83) on github.
+
+
+Version 1.7.5
+-------------
+
+* Release Date: 2022-06-06
+* Changes:
+    * Fixed [isue #91](https://github.com/quandyfactory/dicttoxml/issues/91) on github.
 
 Version 1.7.4
 -------------
@@ -577,14 +699,14 @@ Version 0.6
 -----------
 
 * Release Date: 2012-07-13
-* Changes: 
+* Changes:
     * Merged pull request from [0902horn](https://github.com/0902horn/dicttoxml) on github to escape special XML characters.
 
 Version 0.5
 -----------
 
 * Release Date: 2012-02-28
-* Changes: 
+* Changes:
     * Added support for datetime objects (converts them into ISO format strings) and sets (converts them into lists).
     * Fixed [bug 2](https://github.com/quandyfactory/dicttoxml/issues/2) by raising an exception on unsupported data types.
 
@@ -592,7 +714,7 @@ Version 0.4
 -----------
 
 * Release Date: 2012-01-26
-* Changes: 
+* Changes:
     * Added optional `root` argument (default `True`) on whether to wrap the generated XML in an XML declaration and a root element.
     * Added ability to convert a root object of other data types - int, float, str, unicode, list - as well as dict.
     * Corrected `license` attribute in `setup.py`.
@@ -602,14 +724,14 @@ Version 0.3
 -----------
 
 * Release Date: 2012-01-24
-* Changes: 
+* Changes:
     * Fixed inconsistent str/string attributes.
 
 Version 0.2
 -----------
 
 * Release Date: 2012-01-24
-* Changes: 
+* Changes:
     * Fixed bug in list items.
     * Added element attribute with data type.
 
@@ -617,14 +739,13 @@ Version 0.1
 -----------
 
 * Release Date: 2012-01-24
-* Changes: 
+* Changes:
     * First commit.
 
 Copyright and Licence
 =====================
 
-Copyright 2012 by Ryan McGreal. 
+Copyright 2012 by Ryan McGreal.
 
 Released under the GNU General Public Licence, Version 2:  
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>
-
